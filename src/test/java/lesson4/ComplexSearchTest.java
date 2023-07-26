@@ -1,6 +1,9 @@
 package lesson4;
 
 import io.restassured.path.json.JsonPath;
+import lesson4.dto.response.ComplexSearchDietResponse;
+import lesson4.dto.response.ComplexSearchProteinResponse;
+import lesson4.dto.response.ComplexSearchResponse;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -47,15 +50,18 @@ public class ComplexSearchTest extends SpoonacularCommonTest {
     @Test
     void maxProtein() {
         int mProtein = getNumberValue(50);
-        JsonPath jsonData = given()
+
+        ComplexSearchProteinResponse proteinResponse = given()
                 .queryParam("maxProtein", mProtein)
                 .when()
                 .get(getComplexSearchUrl())
+                .then()
+                .extract()
                 .body()
-                .jsonPath();
+                .as(ComplexSearchProteinResponse.class);
 
-        for (int i = 0; i < ((ArrayList<?>) jsonData.get("results")).size(); i++) {
-            float protein = (float) ((HashMap<?, ?>) ((ArrayList<?>) (( (HashMap<?, ?>) ( ((HashMap<?, ?>) jsonData.getList("results").get(i)).get("nutrition"))).get("nutrients"))).get(0)).get("amount");
+        for (int i = 0; i < proteinResponse.getResults().size(); i++) {
+            float protein = proteinResponse.getResults().get(i).getNutrition().getNutrients().get(0).getAmount();
             assertThat("Текущее значение протеина должно быть меньше максимального значения", protein, lessThan((float) mProtein));
         }
     }
@@ -65,16 +71,18 @@ public class ComplexSearchTest extends SpoonacularCommonTest {
      */
     @Test
     void vegetarianDiet() {
-        JsonPath jsonData = given()
+        ComplexSearchDietResponse dietResponse = given()
                 .queryParam("addRecipeInformation", true)
                 .queryParam("diet", "vegetarian")
                 .when()
                 .get(getComplexSearchUrl())
+                .then()
+                .extract()
                 .body()
-                .jsonPath();
+                .as(ComplexSearchDietResponse.class);
 
-        for (int i = 0; i < ((ArrayList<?>) jsonData.get("results")).size(); i++) {
-            boolean isVegetarian = (boolean) ( ((HashMap<?, ?>) jsonData.getList("results").get(i)).get("vegetarian"));
+        for (int i = 0; i < dietResponse.getResults().size(); i++) {
+            boolean isVegetarian = dietResponse.getResults().get(i).getVegetarian();
             assertThat("Блюдо должно быть вегетарианским", isVegetarian, is(true));
         }
     }
@@ -86,15 +94,17 @@ public class ComplexSearchTest extends SpoonacularCommonTest {
     void title() {
         String mTitle = "Crock";
 
-        JsonPath jsonData = given()
+        ComplexSearchResponse complexSearchResponse = given()
                 .queryParam("titleMatch", mTitle)
                 .when()
                 .get(getComplexSearchUrl())
+                .then()
+                .extract()
                 .body()
-                .jsonPath();
+                .as(ComplexSearchResponse.class);
 
-        for (int i = 0; i < ((ArrayList<?>) jsonData.get("results")).size(); i++) {
-            String title =  ( ((HashMap<?, ?>) jsonData.getList("results").get(i)).get("title")).toString();
+        for (int i = 0; i < complexSearchResponse.getResults().size(); i++) {
+            String title = complexSearchResponse.getResults().get(i).getTitle();
             assertThat(mTitle + " должен быть в заголовке", title, containsString(mTitle));
         }
     }
