@@ -1,8 +1,12 @@
 package lesson4;
 
 import io.restassured.path.json.JsonPath;
+import lesson4.dto.response.CuisineResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -21,12 +25,19 @@ public class CuisineTest extends SpoonacularCommonTest {
      */
     @Test
     void emptyBody() {
-        given()
+        CuisineResponse cuisineResponse = given()
                 .when()
                 .post(getCuisineUrl())
                 .then()
-                .body("cuisine", equalTo("Mediterranean"))
-                .body("confidence", equalTo(0.0F));
+                .extract()
+                .body()
+                .as(CuisineResponse.class);
+
+        List<String> cuisinesExpectedList = Arrays.asList("Mediterranean", "European", "Italian");
+
+        assertThat(cuisineResponse.getCuisine(), equalTo("Mediterranean"));
+        assertThat(cuisineResponse.getConfidence(), equalTo(0.0));
+        assertThat(cuisineResponse.getCuisines(), equalTo(cuisinesExpectedList));
     }
 
     /**
@@ -34,12 +45,16 @@ public class CuisineTest extends SpoonacularCommonTest {
      */
     @Test
     void cuisine() {
-        given()
+        CuisineResponse cuisineResponse = given()
                 .formParam("title", "Slow Cooker Lamb Curry")
                 .when()
                 .post(getCuisineUrl())
                 .then()
-                .body("cuisine", equalTo("Indian"));
+                .extract()
+                .body()
+                .as(CuisineResponse.class);
+
+        assertThat(cuisineResponse.getCuisine(), equalTo("Indian"));
     }
 
     /**
@@ -47,13 +62,17 @@ public class CuisineTest extends SpoonacularCommonTest {
      */
     @Test
     void unknownParam() {
-        given()
+        CuisineResponse cuisineResponse = given()
                 .queryParam("nonlang", "foreign")
                 .formParam("title", "Slow Cooker Lamb Curry")
                 .when()
                 .post(getCuisineUrl())
                 .then()
-                .body("cuisine", equalTo("Indian"));
+                .extract()
+                .body()
+                .as(CuisineResponse.class);
+
+        assertThat(cuisineResponse.getCuisine(), equalTo("Indian"));
     }
 
     /**
@@ -61,13 +80,17 @@ public class CuisineTest extends SpoonacularCommonTest {
      */
     @Test
     void unknownBody() {
-        given()
+        CuisineResponse cuisineResponse = given()
                 .formParam("unknown", "something")
                 .when()
                 .post(getCuisineUrl())
                 .then()
-                .body("cuisine", equalTo("Italian"))
-                .body("confidence", equalTo(0.0F));
+                .extract()
+                .body()
+                .as(CuisineResponse.class);
+
+        assertThat(cuisineResponse.getCuisine(), equalTo("Mediterranean"));
+        assertThat(cuisineResponse.getConfidence(), equalTo(0.0));
     }
 
     /**
@@ -75,16 +98,18 @@ public class CuisineTest extends SpoonacularCommonTest {
      */
     @Test
     void cuisines() {
-        JsonPath jsonData = given()
+        CuisineResponse cuisineResponse = given()
                 .formParam("title", "Slow Cooker Lamb Curry")
                 .when()
                 .post(getCuisineUrl())
                 .then()
-                .extract().jsonPath();
+                .extract()
+                .body()
+                .as(CuisineResponse.class);
 
-        assertThat(jsonData.getList("cuisines").size(), equalTo(2));
-        assertThat(jsonData.getList("cuisines").get(0), equalTo("Indian"));
-        assertThat(jsonData.getList("cuisines").get(1), equalTo("Asian"));
+        assertThat(cuisineResponse.getCuisines().size(), equalTo(2));
+        assertThat(cuisineResponse.getCuisines().get(0), equalTo("Indian"));
+        assertThat(cuisineResponse.getCuisines().get(1), equalTo("Asian"));
 
     }
 
