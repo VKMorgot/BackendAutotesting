@@ -1,9 +1,10 @@
-package db.dao;
+package lesson6.db.dao;
 
-import db.model.Categories;
-import db.model.CategoriesExample;
-import java.util.List;
+import lesson6.db.model.Categories;
+import lesson6.db.model.CategoriesExample;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface CategoriesMapper {
     /**

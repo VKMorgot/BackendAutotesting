@@ -1,8 +1,9 @@
-package db.dao;
+package lesson6.db.dao;
 
-import db.model.Products;
-import db.model.ProductsExample;
 import java.util.List;
+
+import lesson6.db.model.Products;
+import lesson6.db.model.ProductsExample;
 import org.apache.ibatis.annotations.Param;
 
 public interface ProductsMapper {

@@ -5,7 +5,7 @@ import lesson6.dto.Product;
 import lesson6.utils.RetrofitUtils;
 import org.junit.jupiter.api.BeforeAll;
 
-public class CommonProductTest {
+public class CommonProductTest extends CommonTest {
 
     static ProductService productService;
     Product product = null;
@@ -15,4 +15,5 @@ public class CommonProductTest {
         productService = RetrofitUtils.getRetrofit()
                 .create(ProductService.class);
     }
+
 }

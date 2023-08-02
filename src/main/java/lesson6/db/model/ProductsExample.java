@@ -1,4 +1,4 @@
-package db.model;
+package lesson6.db.model;
 
 import java.util.ArrayList;
 import java.util.List;
