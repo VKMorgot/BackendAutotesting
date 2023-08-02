@@ -56,6 +56,16 @@ public class GetProductTest extends CommonProductTest {
         Response<Product> response = productService.getProductById(id).execute();
 
         assertThat(response.code(), CoreMatchers.is(404));
+
+        //проверяем, что такого элемента в БД нет
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
+
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            ProductsExample example = new ProductsExample();
+
+            example.createCriteria().andIdEqualTo((long) id);
+            assertThat(productsMapper.countByExample(example), equalTo(0L));
+        }
     }
 
 }
