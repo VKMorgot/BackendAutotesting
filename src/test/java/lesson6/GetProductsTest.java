@@ -24,9 +24,6 @@ public class GetProductsTest extends CommonProductTest {
         assertThat(response.isSuccessful(), CoreMatchers.is(true));
         assertThat(response.body().string(), CoreMatchers.notNullValue());
 
-        System.out.println("Hi");
-        System.out.println(response.body().source());
-
         //проверяем, что в БД так же есть записи с продуктами (по-умолчанию их 5)
         try (SqlSession session = getSqlSessionFactory().openSession()) {
 
