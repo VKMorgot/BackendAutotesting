@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeAll;
 public class CommonProductTest extends CommonTest {
 
     static ProductService productService;
-    Product product = null;
 
     @BeforeAll
     static void beforeAll() {
