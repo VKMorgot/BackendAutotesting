@@ -1,16 +1,22 @@
 package lesson6;
 
 import com.github.javafaker.Faker;
+import lesson6.db.dao.ProductsMapper;
+import lesson6.db.model.Products;
+import lesson6.db.model.ProductsExample;
 import lesson6.dto.Product;
 import lombok.SneakyThrows;
 import okhttp3.ResponseBody;
+import org.apache.ibatis.session.SqlSession;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import retrofit2.Response;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class DeleteProductTest extends CommonProductTest {
 
@@ -31,6 +37,17 @@ public class DeleteProductTest extends CommonProductTest {
         id = response.body().getId();
 
         assertThat(response.isSuccessful(), CoreMatchers.is(true));
+
+        //проверяем, что продукт добавился в базу
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
+
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            ProductsExample example = new ProductsExample();
+
+            example.createCriteria().andIdEqualTo((long) id);
+            long counter  = productsMapper.countByExample(example);
+            assertThat(counter, equalTo(1L));
+        }
     }
 
     /*
@@ -42,6 +59,15 @@ public class DeleteProductTest extends CommonProductTest {
         Response<ResponseBody> response = productService.deleteProduct(id).execute();
         assertThat(response.isSuccessful(), CoreMatchers.is(true));
         assertThat(response.code(), CoreMatchers.is(200));
+
+        //проверяем, что продукт в базе удалился
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
+
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            Products productFromDB = productsMapper.selectByPrimaryKey((long) id);
+
+            assertThat(productFromDB, Matchers.nullValue());
+        }
     }
 
     /**
@@ -58,8 +84,10 @@ public class DeleteProductTest extends CommonProductTest {
     @SneakyThrows
     @AfterEach
     void tearDown() {
-        if (id != 0) {
-            Response<ResponseBody> response = productService.deleteProduct(id).execute();
+        try(SqlSession session = getSqlSessionFactory().openSession()) {
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            productsMapper.deleteByPrimaryKey((long) id);
+            session.commit();
         }
     }
 }

@@ -5,7 +5,6 @@ import lesson6.db.dao.ProductsMapper;
 import lesson6.db.model.Products;
 import lesson6.dto.Product;
 import lombok.SneakyThrows;
-import okhttp3.ResponseBody;
 import org.apache.ibatis.session.SqlSession;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.AfterEach;
