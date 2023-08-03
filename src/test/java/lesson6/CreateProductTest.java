@@ -1,9 +1,12 @@
 package lesson6;
 
 import com.github.javafaker.Faker;
+import lesson6.db.dao.ProductsMapper;
+import lesson6.db.model.Products;
 import lesson6.dto.Product;
 import lombok.SneakyThrows;
 import okhttp3.ResponseBody;
+import org.apache.ibatis.session.SqlSession;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,9 +42,16 @@ public class CreateProductTest extends CommonProductTest {
 
         assertThat(response.isSuccessful(), CoreMatchers.is(true));
         assertThat(response.code(), CoreMatchers.is(201));
-        assertThat(response.body().getCategoryTitle(), CoreMatchers.equalTo(product.getCategoryTitle()));
-        assertThat(response.body().getTitle(), CoreMatchers.equalTo(product.getTitle()));
-        assertThat(response.body().getPrice(), CoreMatchers.equalTo(product.getPrice()));
+
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
+
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            Products productFromDB = productsMapper.selectByPrimaryKey((long) id);
+
+            assertThat(productFromDB.getTitle(), CoreMatchers.equalTo(product.getTitle()));
+            assertThat(productFromDB.getPrice(), CoreMatchers.equalTo(product.getPrice()));
+            assertThat(productFromDB.getCategory_id(), CoreMatchers.equalTo(1L)); // id = 1 - категория Food
+        }
     }
 
     /**
@@ -61,13 +71,20 @@ public class CreateProductTest extends CommonProductTest {
         int id_double = response_double.body().getId();
         assertThat(response_double.isSuccessful(), CoreMatchers.is(true));
 
-        assertThat(response.body().getId(), CoreMatchers.not(response_double.body().getId()));
-        assertThat(response.body().getTitle(), CoreMatchers.equalTo(response_double.body().getTitle()));
-        assertThat(response.body().getCategoryTitle(), CoreMatchers.equalTo(response_double.body().getCategoryTitle()));
-        assertThat(response.body().getPrice(), CoreMatchers.equalTo(response_double.body().getPrice()));
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
 
-        Response<ResponseBody> response_double_delete = productService.deleteProduct(id_double).execute();
-        assertThat(response_double_delete.isSuccessful(), CoreMatchers.is(true));
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            Products productFromDB = productsMapper.selectByPrimaryKey((long) id);
+            Products productFromDBDouble = productsMapper.selectByPrimaryKey((long) id_double);
+
+            assertThat(productFromDB, CoreMatchers.not(productFromDBDouble));
+            assertThat(productFromDB.getId(), CoreMatchers.not(productFromDBDouble.getId()));
+            assertThat(productFromDB.getTitle(), CoreMatchers.equalTo(productFromDBDouble.getTitle()));
+            assertThat(productFromDB.getPrice(), CoreMatchers.equalTo(productFromDBDouble.getPrice()));
+            assertThat(productFromDB.getCategory_id(), CoreMatchers.equalTo(productFromDBDouble.getCategory_id())); // id = 1 - категория Food
+        }
+
+        deleteProductFromDB(id_double);
     }
 
     /**
@@ -84,16 +101,25 @@ public class CreateProductTest extends CommonProductTest {
 
         assertThat(response.isSuccessful(), CoreMatchers.is(false));
         assertThat(response.code(), CoreMatchers.is(500));
+    }
 
+    /**
+     * Удаление продукта из базы
+     * @param productId id продукта
+     */
+    @SneakyThrows
+    void deleteProductFromDB(long productId) {
+        try(SqlSession session = getSqlSessionFactory().openSession()) {
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            productsMapper.deleteByPrimaryKey(productId);
+            session.commit();
+        }
     }
 
     @SneakyThrows
     @AfterEach
     void tearDown() {
-        if (id != 0) {
-            Response<ResponseBody> response = productService.deleteProduct(id).execute();
-            assertThat(response.isSuccessful(), CoreMatchers.is(true));
-        }
+        deleteProductFromDB(id);
     }
 
 }
