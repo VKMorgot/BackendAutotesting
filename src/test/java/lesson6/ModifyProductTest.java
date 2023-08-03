@@ -1,9 +1,12 @@
 package lesson6;
 
 import com.github.javafaker.Faker;
+import lesson6.db.dao.ProductsMapper;
+import lesson6.db.model.Products;
+import lesson6.db.model.ProductsExample;
 import lesson6.dto.Product;
 import lombok.SneakyThrows;
-import okhttp3.ResponseBody;
+import org.apache.ibatis.session.SqlSession;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import retrofit2.Response;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 public class ModifyProductTest extends CommonProductTest {
 
@@ -18,6 +22,10 @@ public class ModifyProductTest extends CommonProductTest {
     Faker faker = new Faker();
     int id = 0;
 
+    /**
+     * Добавляем новый продукт.
+     * Делаем через api, так как при добавлении через db было бы проблемно получать id добавленного элемента
+     */
     @SneakyThrows
     @BeforeEach
     void setUp() {
@@ -31,6 +39,17 @@ public class ModifyProductTest extends CommonProductTest {
         id = response.body().getId();
 
         assertThat(response.isSuccessful(), CoreMatchers.is(true));
+
+        //проверяем, что продукт добавился в базу
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
+
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            ProductsExample example = new ProductsExample();
+
+            example.createCriteria().andIdEqualTo((long) id);
+            long counter  = productsMapper.countByExample(example);
+            assertThat(counter, equalTo(1L));
+        }
     }
 
     /**
@@ -56,6 +75,17 @@ public class ModifyProductTest extends CommonProductTest {
         assertThat(response.body().getCategoryTitle(), CoreMatchers.equalTo(productToModify.getCategoryTitle()));
         assertThat(response.body().getTitle(), CoreMatchers.equalTo(productToModify.getTitle()));
         assertThat(response.body().getPrice(), CoreMatchers.equalTo(productToModify.getPrice()));
+
+        //проверяем, что продукт в базе изменился
+        try (SqlSession session = getSqlSessionFactory().openSession()) {
+
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            Products productFromDB = productsMapper.selectByPrimaryKey((long) id);
+
+            assertThat(productFromDB.getTitle(), equalTo(productToModify.getTitle()));
+            assertThat(productFromDB.getCategory_id(), equalTo(1L)); // id = 1 - это Food
+            assertThat(productFromDB.getPrice(), equalTo(productToModify.getPrice()));
+        }
     }
 
     /**
@@ -101,9 +131,10 @@ public class ModifyProductTest extends CommonProductTest {
     @SneakyThrows
     @AfterEach
     void tearDown() {
-        if (id != 0) {
-            Response<ResponseBody> response = productService.deleteProduct(id).execute();
-            assertThat(response.isSuccessful(), CoreMatchers.is(true));
+        try(SqlSession session = getSqlSessionFactory().openSession()) {
+            ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
+            productsMapper.deleteByPrimaryKey((long) id);
+            session.commit();
         }
     }
 
