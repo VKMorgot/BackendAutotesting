@@ -1,6 +1,7 @@
 package lesson6;
 
 import lesson6.db.dao.ProductsMapper;
+import lesson6.db.model.Products;
 import lesson6.db.model.ProductsExample;
 import lesson6.dto.Product;
 import lombok.SneakyThrows;
@@ -33,15 +34,10 @@ public class GetProductTest extends CommonProductTest {
         try (SqlSession session = getSqlSessionFactory().openSession()) {
 
             ProductsMapper productsMapper = session.getMapper(ProductsMapper.class);
-            ProductsExample example = new ProductsExample();
+            Products product = productsMapper.selectByPrimaryKey((long) 1);
 
-            example.createCriteria()
-                    .andCategory_idEqualTo((long) 1)       // id=1 категории = Food
-                    .andTitleEqualTo("Milk");
-
-            assertThat(productsMapper.countByExample(example), equalTo(1L)); // по id найден один продукт
-            assertThat(productsMapper.selectByExample(example).get(0).getTitle(), equalTo("Milk"));  // имя продукта
-            assertThat(productsMapper.selectByExample(example).get(0).getCategory_id(), equalTo(1L));  // принадлежность к категории
+            assertThat(product.getCategory_id(), equalTo(1L)); // id=1 категории = Food
+            assertThat(product.getTitle(), equalTo("Milk"));
         }
     }
 
@@ -53,10 +49,6 @@ public class GetProductTest extends CommonProductTest {
     void getProductByIdNotExist() {
         int id = 1000;
 
-        Response<Product> response = productService.getProductById(id).execute();
-
-        assertThat(response.code(), CoreMatchers.is(404));
-
         //проверяем, что такого элемента в БД нет
         try (SqlSession session = getSqlSessionFactory().openSession()) {
 
@@ -66,6 +58,9 @@ public class GetProductTest extends CommonProductTest {
             example.createCriteria().andIdEqualTo((long) id);
             assertThat(productsMapper.countByExample(example), equalTo(0L));
         }
+
+        Response<Product> response = productService.getProductById(id).execute();
+        assertThat(response.code(), CoreMatchers.is(404));
     }
 
 }
