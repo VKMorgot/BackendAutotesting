@@ -20,18 +20,18 @@
         </javaTypeResolver>
 
         <javaModelGenerator targetPackage="db.model"
-                            targetProject="src/main/java/lesson6">
+                            targetProject="src/main/java/lesson7">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>
 
         <sqlMapGenerator targetPackage="db.mapper.xml"
-                         targetProject="src/main/java/lesson6">
+                         targetProject="src/main/java/lesson7">
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
 
         <javaClientGenerator type="XMLMAPPER" targetPackage="db.dao"
-                             targetProject="src/main/java/lesson6">
+                             targetProject="src/main/java/lesson7">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
 
